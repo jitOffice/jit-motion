@@ -212,4 +212,4 @@ Issues and PRs are welcome — new scene archetypes, more language versions, and
 
 ## License
 
-Released under the [MIT License](LICENSE). © 2026 JitWord 即时文档团队 (flowmix).
+Released under the [MIT License](LICENSE). © 2026 JitWord 即时文档团队.
