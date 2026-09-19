@@ -1,0 +1,23 @@
+# ---- OS / editor cruft ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# ---- Python (scripts/validate.py) ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- Logs & temp ----
+*.log
+*.tmp
+
+# ---- Generated outputs when experimenting with the skill ----
+# (uncomment if you test-run the skill inside this repo and don't want to commit results)
+# *-promo.html
+# assets/*-logo.png

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<!--
+  product-promo-animation - skeleton template / 骨架模板（shared & language-neutral / 双语共享）
+  EN guide: ../SKILL.md   |   中文说明: ../SKILL.zh-CN.md
+  Replace every {{TOKEN}} below, then validate:
+  替换下方所有 {{TOKEN}}，然后校验：
+    python3 ../scripts/validate.py <output.html>   (add --lang zh|en if needed)
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{PRODUCT}} · 产品宣传动画 | {{POSITIONING}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}" />
+<link rel="icon" type="image/png" href="./assets/{{PRODUCT_SLUG}}-logo.png" />
+<link rel="canonical" href="{{OFFICIAL_URL}}/video/" />
+<meta property="og:type" content="video.other" />
+<meta property="og:title" content="{{PRODUCT}} · 产品宣传动画" />
+<meta property="og:description" content="{{DURATION_INT}}秒读懂{{PRODUCT}}：{{CAP1}} × {{CAP2}} × {{CAP3}}。" />
+<meta property="og:image" content="{{LOGO_URL}}" />
+<meta property="og:url" content="{{OFFICIAL_URL}}/video/" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org", "@type": "VideoObject",
+  "name": "{{PRODUCT}} · 产品宣传动画",
+  "description": "{{META_DESCRIPTION}}",
+  "thumbnailUrl": "{{LOGO_URL}}", "uploadDate": "{{UPLOAD_DATE}}",
+  "duration": "PT26S",
+  "contentUrl": "{{OFFICIAL_URL}}/video/",
+  "publisher": { "@type": "Organization", "name": "{{PRODUCT}}",
+    "logo": { "@type": "ImageObject", "url": "{{LOGO_URL}}" } }
+}
+</script>
+<!-- GSAP: point to a local copy or CDN -->
+<script src="../assets/gsap.js"></script>
+<style>
+  /* ===================== RESET & BRAND TOKENS ===================== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #165DFF;        /* {{harvested primary}} */
+    --brand-2: #4080FF;      /* {{gradient end}} */
+    --accent-teal: #00C4B4;
+    --accent-orange: #FF7D00;
+    --accent-green: #00B42A;
+    --accent-gold: #FFB800;
+    --accent-rose: #F53F3F;
+    --ink: #151515; --ink-2: #6C6F7D; --line: #E8ECFF;
+  }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden; background: #050816;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink); -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===================== STAGE & ASPECT SYSTEM ===================== */
+  #viewport {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(1200px 800px at 15% 20%, rgba(22,93,255,0.20), transparent 60%),
+      radial-gradient(1000px 700px at 85% 80%, rgba(0,196,180,0.12), transparent 60%),
+      linear-gradient(135deg, #060B1F 0%, #0B1435 50%, #061029 100%);
+  }
+  #stage {
+    position: relative; flex-shrink: 0;
+    --sw: 1920px; --sh: 1080px; --pad-x: 120px; --col-left: 620px; --col-gap: 80px;
+    --title-size: 78px; --stack-mode: 0;
+    width: var(--sw); height: var(--sh); transform-origin: center center;
+    background: #fff; border-radius: 24px; overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06), 0 0 200px rgba(22,93,255,0.20);
+  }
+  #stage[data-aspect="4:3"]  { --sw:1440px; --sh:1080px; --pad-x:70px; --col-left:500px; --col-gap:46px; --title-size:64px; }
+  #stage[data-aspect="9:16"] { --sw:1080px; --sh:1920px; --pad-x:56px; --col-left:100%; --col-gap:32px; --title-size:64px; --stack-mode:1; }
+  #stage[data-aspect="1:1"]  { --sw:1080px; --sh:1080px; --pad-x:56px; --col-left:100%; --col-gap:30px; --title-size:58px; --stack-mode:1; }
+
+  /* ===================== SCENE BASE ===================== */
+  .scene {
+    position: absolute; inset: 0; opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #F8FAFF 0%, #EEF3FF 55%, #F0F5FF 100%);
+    overflow: hidden;
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(22,93,255,0.06) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(22,93,255,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 82%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 82%);
+  }
+  .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; pointer-events: none; }
+  .orb-a { width: 620px; height: 620px; background: radial-gradient(circle, var(--brand-2), transparent 70%); top: -180px; left: -160px; }
+  .orb-b { width: 520px; height: 520px; background: radial-gradient(circle, var(--accent-teal), transparent 70%); bottom: -160px; right: -120px; opacity: 0.3; }
+  .orb-c { width: 480px; height: 480px; background: radial-gradient(circle, var(--brand), transparent 70%); top: 42%; right: 12%; opacity: 0.2; }
+
+  /* ===================== LAYOUT (2-col ↔ stacked) ===================== */
+  .layout {
+    display: grid; grid-template-columns: var(--col-left) minmax(0, 1fr);
+    gap: var(--col-gap); align-items: center; padding: 88px var(--pad-x);
+    position: relative; z-index: 3; width: 100%; height: 100%;
+  }
+  .left-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(22,93,255,0.10), rgba(64,128,255,0.05));
+    border: 1px solid rgba(22,93,255,0.22); color: var(--brand);
+    font-size: clamp(14px, 1.15vw, 20px); font-weight: 600; letter-spacing: 0.5px;
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 4px rgba(22,93,255,0.15); }
+  .scene-title {
+    font-size: var(--title-size); font-weight: 800; letter-spacing: -1px; line-height: 1.18; word-break: break-word;
+    background: linear-gradient(135deg, #0E4FD8 0%, var(--brand) 50%, var(--brand-2) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .scene-sub { font-size: clamp(18px, 1.55vw, 26px); color: var(--ink-2); margin-top: 14px; line-height: 1.55; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; max-width: 100%; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px;
+    background: #fff; border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(22,93,255,0.08);
+    font-size: clamp(12px, 1vw, 16px); font-weight: 600; color: #1D2129;
+  }
+  .chip svg { width: 16px; height: 16px; }
+  .chip.blue svg { color: var(--brand); } .chip.teal svg { color: var(--accent-teal); }
+  .chip.orange svg { color: var(--accent-orange); } .chip.green svg { color: var(--accent-green); }
+  .chip.rose svg { color: var(--accent-rose); }
+
+  /* ===================== LOGO CONTAINER ===================== */
+  .px-logo {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F5FF 100%); border-radius: 44px;
+    box-shadow: 0 18px 50px rgba(22,93,255,0.22), 0 0 0 1px rgba(22,93,255,0.14) inset;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .px-logo img { position: relative; z-index: 2; width: 90%; height: 90%; object-fit: contain; display: block;
+    filter: drop-shadow(0 4px 12px rgba(22,93,255,0.30)); }
+
+  /* ===================== S1 CENTER + S8 END ===================== */
+  .center-wrap { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  #s1 .logo-halo { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  #s1 .logo-img { width: 200px; height: 200px; border-radius: 44px; z-index: 2; }
+  #s1 .brand-name {
+    font-size: 104px; font-weight: 900; letter-spacing: 2px; line-height: 1; margin-top: 28px;
+    background: linear-gradient(135deg, #0E4FD8 0%, var(--brand) 45%, var(--accent-teal) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  #s1 .brand-sub { font-size: clamp(22px, 2.05vw, 38px); color: var(--ink); letter-spacing: 3px; font-weight: 700; margin-top: 6px; white-space: nowrap; }
+  #s1 .brand-tags { display: flex; gap: 14px; margin-top: 30px; }
+  .p-dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; }
+
+  .end-wrap { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+  #s8 .end-logo { width: 180px; height: 180px; border-radius: 40px; }
+  #s8 .end-brand { font-size: 84px; font-weight: 900; letter-spacing: 3px; line-height: 1;
+    background: linear-gradient(135deg, #0E4FD8 0%, var(--brand) 50%, var(--accent-teal) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #s8 .end-slogan { font-size: clamp(24px, 2.2vw, 40px); color: var(--ink); letter-spacing: 3px; font-weight: 700; line-height: 1.4; }
+  #s8 .end-slogan .hl { padding: 0 6px; border-radius: 6px; color: var(--brand); font-weight: 900;
+    background: linear-gradient(135deg, rgba(22,93,255,0.16), rgba(0,196,180,0.16)); }
+  #s8 .end-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  #s8 .end-cta { display: inline-flex; align-items: center; gap: 10px; padding: 14px 30px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 50%, var(--accent-teal) 100%);
+    color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 1px; position: relative; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(22,93,255,0.42), 0 0 0 1px rgba(255,255,255,0.20) inset; }
+  #s8 .end-cta svg { width: 18px; height: 18px; }
+  #s8 .end-cta::before { content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+    animation: ctaShine 2.6s ease-in-out infinite; }
+  @keyframes ctaShine { 0%{transform:translateX(-100%);} 60%{transform:translateX(100%);} 100%{transform:translateX(100%);} }
+  #s8 .end-url { font-size: 15px; color: var(--ink-2); font-weight: 600; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 6px; }
+  #s8 .end-url svg { width: 14px; height: 14px; color: var(--brand); }
+  #s8 .tech-lines { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
+  #s8 .tech-lines svg { width: 100%; height: 100%; display: block; }
+  #s8 .tl-path { fill: none; stroke: rgba(22,93,255,0.22); stroke-width: 1; }
+  #s8 .tl-path.teal { stroke: rgba(0,196,180,0.22); }
+  #s8 .tl-node { fill: rgba(22,93,255,0.35); }
+
+  /* ===================== SAMPLE GRAPHIC: TABLE CARD (S2) ===================== */
+  .table-card { width: 100%; background: #fff; border-radius: 16px; border: 1px solid var(--line);
+    box-shadow: 0 24px 60px rgba(22,93,255,0.12); overflow: hidden; }
+  .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .tt-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .tt-dot.r{background:#FF5F57;} .tt-dot.y{background:#FEBC2E;} .tt-dot.g{background:#28C840;}
+  .tt-title { margin-left: 10px; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .table-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr 1fr; align-items: center;
+    padding: 0 18px; height: 50px; border-bottom: 1px solid #F2F3F5; font-size: 14px; color: #4E5969; }
+  .table-row.th { height: 44px; background: #F8FAFF; font-weight: 700; color: var(--ink-2); font-size: 13px; }
+  .cell-tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+  /* ===================== CONTROLS ===================== */
+  #controls {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    display: flex; align-items: center; gap: 14px; padding: 10px 18px; z-index: 100;
+    background: rgba(10,15,40,0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; box-shadow: 0 12px 36px rgba(0,0,0,0.42);
+    opacity: 0; transition: opacity .3s, transform .3s;
+  }
+  #controls.show, body:hover #controls, body.controls-force-show #controls { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .ctrl-btn { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.08); color: #fff; display: flex; align-items: center; justify-content: center;
+    transition: background .2s, transform .2s; }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.18); transform: scale(1.06); }
+  .ctrl-btn svg { width: 18px; height: 18px; }
+  #progress-wrap { width: 240px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.16); cursor: pointer; }
+  #progress-bar { height: 100%; width: 0%; border-radius: 3px; background: linear-gradient(90deg, var(--brand), var(--accent-teal)); }
+  #time-label, #scene-label { color: #fff; font-size: 12px; font-weight: 600; min-width: 70px; }
+  #scene-label { color: rgba(255,255,255,0.7); min-width: 90px; }
+  .aspect-group { display: flex; gap: 4px; }
+  .aspect-btn { padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
+    background: transparent; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700; transition: all .2s; }
+  .aspect-btn.active { background: linear-gradient(135deg, var(--brand), var(--accent-teal)); color: #fff; border-color: transparent; }
+
+  /* ===================== STACKED MODE (9:16 / 1:1) ===================== */
+  #stage[data-stack-mode="1"] .layout {
+    grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center;
+    gap: var(--col-gap); padding: 120px var(--pad-x) 90px;
+  }
+  /* 9:16 scoped tuning (placed after shared rule to win cascade) */
+  #stage[data-aspect="9:16"] .layout { grid-template-rows: auto auto; align-content: center;
+    justify-items: stretch; gap: 40px; padding: 96px var(--pad-x) 84px; }
+  #stage[data-aspect="9:16"] .left-copy { align-items: center; text-align: center; max-width: 100%; }
+  #stage[data-aspect="9:16"] .left-copy .scene-title,
+  #stage[data-aspect="9:16"] .left-copy .scene-sub { width: 100%; }
+  #stage[data-aspect="9:16"] .chip-row { justify-content: center; }
+  #stage[data-aspect="9:16"] #s1 .brand-name { font-size: 76px; }
+  #stage[data-aspect="9:16"] #s1 .brand-sub { font-size: 26px; letter-spacing: 2px; }
+  #stage[data-aspect="9:16"] #s1 .logo-img { width: 170px; height: 170px; }
+  #stage[data-aspect="9:16"] #s8 .end-logo { width: 150px; height: 150px; }
+  #stage[data-aspect="9:16"] #s8 .end-brand { font-size: 60px; }
+  #stage[data-aspect="1:1"] #s1 .brand-name { font-size: 70px; }
+  #stage[data-aspect="4:3"] #s1 .brand-name { font-size: 88px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== SVG SYMBOL LIBRARY ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></symbol>
+  <symbol id="ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></symbol>
+  <symbol id="ic-replay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="ic-table" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="ic-chart-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M7 21V9M12 21V4M17 21v-8"/></symbol>
+  <symbol id="ic-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="ic-ai" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3.5"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="ic-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol>
+  <symbol id="ic-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <!-- {{ADD 30-45 more symbols as scenes need them}} -->
+</defs></svg>
+
+<!-- ===================== STAGE ===================== -->
+<div id="viewport">
+<div id="stage" data-aspect="16:9">
+
+  <!-- ========== S1 · BRAND OPENING ========== -->
+  <div class="scene" id="s1">
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-a"></div><div class="glow-orb orb-b"></div><div class="glow-orb orb-c"></div>
+    <svg class="logo-halo" width="520" height="520" viewBox="0 0 520 520" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
+      <circle cx="260" cy="260" r="150" fill="none" stroke="rgba(22,93,255,0.18)" stroke-width="1.5" stroke-dasharray="6 10"/>
+      <circle cx="260" cy="260" r="200" fill="none" stroke="rgba(0,196,180,0.14)" stroke-width="1.5" stroke-dasharray="4 14"/>
+      <circle cx="260" cy="260" r="245" fill="none" stroke="rgba(22,93,255,0.10)" stroke-width="1" stroke-dasharray="2 18"/>
+    </svg>
+    <div class="center-wrap">
+      <div class="px-logo logo-img"><img src="./assets/{{PRODUCT_SLUG}}-logo.png" alt="{{PRODUCT}}" /></div>
+      <div class="brand-name">{{PRODUCT}}</div>
+      <div class="brand-sub">{{TAGLINE}}</div>
+      <div class="brand-tags">
+        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
+      </div>
+    </div>
+    <!-- data particles: set data-tx/data-ty to converge offsets -->
+    <span class="p-dot" style="background:#165DFF;top:20%;left:15%" data-tx="120" data-ty="80"></span>
+    <span class="p-dot" style="background:#00C4B4;top:70%;left:80%" data-tx="-100" data-ty="-60"></span>
+    <span class="p-dot" style="background:#FF7D00;top:30%;left:85%" data-tx="-140" data-ty="40"></span>
+  </div>
+
+  <!-- ========== S2 · CORE CAPABILITY (sample: table) ========== -->
+  <div class="scene" id="s2">
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-a"></div><div class="glow-orb orb-c"></div>
+    <div class="layout">
+      <div class="left-copy">
+        <div class="badge"><span class="dot"></span>Scene 02 · {{S2_LABEL}}</div>
+        <div class="scene-title" style="margin-top:16px;">{{S2_TITLE_L1}}<br/>{{S2_TITLE_L2}}</div>
+        <div class="scene-sub">{{S2_SUB}}</div>
+        <div class="chip-row">
+          <div class="chip blue"><svg><use href="#ic-table"/></svg>{{S2_CHIP1}}</div>
+          <div class="chip teal"><svg><use href="#ic-layers"/></svg>{{S2_CHIP2}}</div>
+          <div class="chip orange"><svg><use href="#ic-ai"/></svg>{{S2_CHIP3}}</div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span class="tt-dot r"></span><span class="tt-dot y"></span><span class="tt-dot g"></span>
+          <span class="tt-title">{{TABLE_TITLE}}</span>
+        </div>
+        <div class="table-row th"><span>{{COL1}}</span><span>{{COL2}}</span><span>{{COL3}}</span><span>{{COL4}}</span><span>{{COL5}}</span></div>
+        <div class="table-row"><span>{{R1C1}}</span><span>{{R1C2}}</span><span>{{R1C3}}</span><span><span class="cell-tag" style="background:#E8F3FF;color:#165DFF">{{R1C4}}</span></span><span>{{R1C5}}</span></div>
+        <div class="table-row"><span>{{R2C1}}</span><span>{{R2C2}}</span><span>{{R2C3}}</span><span><span class="cell-tag" style="background:#E8FFEA;color:#00873C">{{R2C4}}</span></span><span>{{R2C5}}</span></div>
+        <div class="table-row"><span>{{R3C1}}</span><span>{{R3C2}}</span><span>{{R3C3}}</span><span><span class="cell-tag" style="background:#FFF7E8;color:#FF7D00">{{R3C4}}</span></span><span>{{R3C5}}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- {{ADD S3..S7 capability scenes here, following the .layout > .left-copy + graphic contract}} -->
+
+  <!-- ========== S8 · BRAND CLOSE ========== -->
+  <div class="scene" id="s8">
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-a"></div><div class="glow-orb orb-b"></div>
+    <div class="tech-lines">
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+        <path class="tl-path" d="M0,180 Q480,120 960,200 T1920,160"/>
+        <path class="tl-path teal" d="M0,900 Q480,960 960,880 T1920,920"/>
+        <circle class="tl-node" cx="180" cy="168" r="3"/><circle class="tl-node" cx="1240" cy="188" r="3"/>
+      </svg>
+    </div>
+    <div class="end-wrap">
+      <div class="px-logo end-logo"><img src="./assets/{{PRODUCT_SLUG}}-logo.png" alt="{{PRODUCT}}" /></div>
+      <div class="end-brand">{{PRODUCT}}</div>
+      <div class="end-slogan"><span class="hl">{{SLOGAN_HL}}</span> · {{SLOGAN_REST}}</div>
+      <div class="end-chips">
+        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
+        <div class="chip green"><svg><use href="#ic-shield"/></svg>{{CAP4}}</div>
+      </div>
+      <div class="end-cta">{{CTA_TEXT}}<svg><use href="#ic-arrow-right"/></svg></div>
+      <div class="end-url"><svg><use href="#ic-globe"/></svg>{{OFFICIAL_DOMAIN}}</div>
+    </div>
+  </div>
+
+</div><!-- /#stage -->
+</div><!-- /#viewport -->
+
+<!-- ===================== CONTROLS ===================== -->
+<div id="controls" class="show">
+  <button class="ctrl-btn" id="btn-play" title="播放/暂停 (空格)">
+    <svg id="icon-play"><use href="#ic-play"/></svg>
+    <svg id="icon-pause" style="display:none"><use href="#ic-pause"/></svg>
+  </button>
+  <button class="ctrl-btn" id="btn-replay" title="重播 (R)"><svg><use href="#ic-replay"/></svg></button>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+  <div id="time-label">00.0 / 26.2s</div>
+  <div id="scene-label">{{S1_LABEL}}</div>
+  <div class="aspect-group" role="group" aria-label="尺寸切换">
+    <button class="aspect-btn active" data-aspect="16:9" title="宽屏 16:9 (1)">16:9</button>
+    <button class="aspect-btn" data-aspect="4:3" title="传统 4:3 (2)">4:3</button>
+    <button class="aspect-btn" data-aspect="1:1" title="方形 1:1 (3)">1:1</button>
+    <button class="aspect-btn" data-aspect="9:16" title="竖屏 9:16 (4)">9:16</button>
+  </div>
+</div>
+
+<script>
+/* ===================== STAGE SCALING ===================== */
+const stage = document.getElementById('stage');
+function fitStage() {
+  const sw = stage.offsetWidth, sh = stage.offsetHeight, padding = 40;
+  const scale = Math.min((innerWidth - padding)/sw, (innerHeight - padding)/sh, 1);
+  stage.style.transform = 'scale(' + scale + ')';
+}
+function setAspect(ratio) {
+  stage.dataset.aspect = ratio;
+  document.querySelectorAll('.aspect-btn').forEach(b => b.classList.toggle('active', b.dataset.aspect === ratio));
+  requestAnimationFrame(fitStage);
+}
+addEventListener('resize', fitStage); fitStage();
+
+/* ===================== SCENE REGISTRY & TIMELINE ===================== */
+const scenes = [
+  { id: 's1', label: '{{S1_LABEL}}' },
+  { id: 's2', label: '{{S2_LABEL}}' },
+  /* {{add s3..s8}} */
+  { id: 's8', label: '{{S8_LABEL}}' }
+];
+const MARKS = [0, 2.6];   /* {{one start time per scene, e.g. 0,2.6,6.0,9.4,...}} */
+const DURATION = 26.2;    /* {{set to the real timeline end; account for yoyo/repeat overruns}} */
+
+const progressBar = document.getElementById('progress-bar');
+const timeLabel = document.getElementById('time-label');
+const sceneLabel = document.getElementById('scene-label');
+const iconPlay = document.getElementById('icon-play');
+const iconPause = document.getElementById('icon-pause');
+const btnPlay = document.getElementById('btn-play');
+const btnReplay = document.getElementById('btn-replay');
+const progressWrap = document.getElementById('progress-wrap');
+const fmt = t => String(Math.floor(t)).padStart(2,'0') + '.' + Math.floor((t%1)*10);
+function setPlayIcon(paused){ iconPlay.style.display = paused?'block':'none'; iconPause.style.display = paused?'none':'block'; }
+
+const tl = gsap.timeline({ paused: true, onUpdate: updateProgress, onComplete: () => setPlayIcon(true) });
+function showScene(id, at){ tl.set('#'+id,{opacity:1,zIndex:5},at); tl.set('#'+id,{zIndex:4},at+0.01); }
+function hideScene(id, at){ tl.to('#'+id,{opacity:0,duration:0.5,ease:'power2.inOut'},at); }
+
+/* ---------- S1 · brand opening (0 - 2.6s) ---------- */
+const T1 = 0;
+showScene('s1', T1);
+tl.from('#s1 .logo-halo', { scale:0.35, opacity:0, duration:1.0, ease:'power3.out' }, T1+0.05);
+tl.from('#s1 .logo-img',  { scale:0.25, opacity:0, rotate:-180, duration:1.15, ease:'back.out(1.7)' }, T1+0.15);
+tl.to('#s1 .logo-img',    { y:-12, duration:1.4, ease:'sine.inOut', yoyo:true, repeat:1 }, T1+1.2);
+tl.fromTo('#s1 .p-dot', { opacity:0, scale:0.4 }, { opacity:1, scale:1, duration:0.35, stagger:0.05 }, T1+0.1);
+tl.to('#s1 .p-dot', { x:(i,t)=>parseFloat(t.dataset.tx), y:(i,t)=>parseFloat(t.dataset.ty), opacity:0, duration:1.0, stagger:0.05, ease:'power2.in' }, T1+0.6);
+tl.from('#s1 .brand-name', { y:40, opacity:0, duration:0.7, ease:'power3.out' }, T1+0.9);
+tl.from('#s1 .brand-sub',  { y:24, opacity:0, duration:0.6 }, T1+1.15);
+tl.from('#s1 .brand-tags .chip', { scale:0.7, opacity:0, duration:0.45, stagger:0.1, ease:'back.out(2)' }, T1+1.4);
+hideScene('s1', 2.1);
+
+/* ---------- S2 · core capability (2.6 - 6.0s) ---------- */
+const T2 = 2.6;
+showScene('s2', T2);
+tl.from('#s2 .badge', { y:-18, opacity:0, duration:0.4 }, T2+0.05);
+tl.from('#s2 .scene-title', { y:36, opacity:0, duration:0.6, ease:'power3.out' }, T2+0.15);
+tl.from('#s2 .scene-sub', { y:18, opacity:0, duration:0.45 }, T2+0.35);
+tl.from('#s2 .chip', { scale:0.7, opacity:0, duration:0.4, stagger:0.06, ease:'back.out(2)' }, T2+0.5);
+tl.from('#s2 .table-card', { x:80, opacity:0, duration:0.7, ease:'power3.out' }, T2+0.3);
+tl.from('#s2 .table-row', { y:12, opacity:0, duration:0.35, stagger:0.07, ease:'power2.out' }, T2+0.7);
+hideScene('s2', 5.5);
+
+/* {{ADD S3..S8 tweens here, each: showScene → entrance beats → graphic beats → hideScene}} */
+
+/* ===================== PROGRESS ===================== */
+function updateProgress() {
+  const t = tl.time();
+  progressBar.style.width = (t/DURATION*100) + '%';
+  timeLabel.textContent = fmt(t) + ' / ' + fmt(DURATION) + 's';
+  let cur = 0;
+  for (let i=0;i<MARKS.length;i++) if (t >= MARKS[i]-0.05) cur = i;
+  if (scenes[cur]) sceneLabel.textContent = scenes[cur].label;
+}
+
+/* ===================== CONTROL WIRING ===================== */
+btnPlay.addEventListener('click', () => {
+  if (tl.progress() >= 1) { tl.restart(); setPlayIcon(false); return; }
+  if (tl.paused()) { tl.play(); setPlayIcon(false); } else { tl.pause(); setPlayIcon(true); }
+});
+btnReplay.addEventListener('click', () => { tl.restart(); setPlayIcon(false); });
+progressWrap.addEventListener('click', e => {
+  const r = progressWrap.getBoundingClientRect();
+  tl.progress(Math.max(0, Math.min(1, (e.clientX - r.left)/r.width))); updateProgress();
+});
+document.querySelectorAll('.aspect-btn').forEach(b => b.addEventListener('click', () => setAspect(b.dataset.aspect)));
+addEventListener('keydown', e => {
+  const map = {'1':'16:9','2':'4:3','3':'1:1','4':'9:16'};
+  if (map[e.key]) return setAspect(map[e.key]);
+  if (e.code==='Space'){ e.preventDefault(); btnPlay.click(); }
+  else if (e.key==='r'||e.key==='R') btnReplay.click();
+  else if (e.key==='ArrowRight') tl.time(Math.min(DURATION, tl.time()+1));
+  else if (e.key==='ArrowLeft')  tl.time(Math.max(0, tl.time()-1));
+});
+
+/* ===================== CONTROLS AUTO-HIDE ===================== */
+(function(){
+  const controls = document.getElementById('controls'); let idle; const DELAY = 2600;
+  function show(){ document.body.classList.add('controls-force-show'); clearTimeout(idle);
+    idle = setTimeout(()=>{ if(controls.matches(':hover')) return show();
+      document.body.classList.remove('controls-force-show'); }, DELAY); }
+  ['mousemove','mousedown','touchstart'].forEach(e => addEventListener(e, show, {passive:true}));
+  document.addEventListener('mouseleave', ()=>{ clearTimeout(idle); document.body.classList.remove('controls-force-show'); });
+})();
+
+window.__tl = tl;   /* debug hook */
+addEventListener('load', () => {
+  fitStage(); updateProgress();
+  setTimeout(() => { tl.play(); setPlayIcon(false); document.getElementById('controls').classList.remove('show'); }, 400);
+});
+</script>
+</body>
+</html>
