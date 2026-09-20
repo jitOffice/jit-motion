@@ -31,8 +31,9 @@
     "logo": { "@type": "ImageObject", "url": "{{LOGO_URL}}" } }
 }
 </script>
-<!-- GSAP: point to a local copy or CDN -->
-<script src="../assets/gsap.js"></script>
+<!-- GSAP: CDN by default. For offline use, download gsap.min.js next to this
+     file and swap the src for a relative path such as "./assets/gsap.min.js". -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
   /* ===================== RESET & BRAND TOKENS ===================== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
