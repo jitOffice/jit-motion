@@ -31,8 +31,9 @@
     "logo": { "@type": "ImageObject", "url": "{{LOGO_URL}}" } }
 }
 </script>
-<!-- GSAP: point to a local copy or CDN -->
-<script src="../assets/gsap.js"></script>
+<!-- GSAP: CDN by default. For offline use, download gsap.min.js next to this
+     file and swap the src for a relative path such as "./assets/gsap.min.js". -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
   /* ===================== RESET & BRAND TOKENS ===================== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,7 +64,7 @@
   #stage {
     position: relative; flex-shrink: 0;
     --sw: 1920px; --sh: 1080px; --pad-x: 120px; --col-left: 620px; --col-gap: 80px;
-    --title-size: 78px; --stack-mode: 0;
+    --title-size: 78px; --stack-mode: 0;  /* informational only - cannot be used in a selector */
     width: var(--sw); height: var(--sh); transform-origin: center center;
     background: #fff; border-radius: 24px; overflow: hidden;
     box-shadow: 0 40px 120px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06), 0 0 200px rgba(22,93,255,0.20);
@@ -119,6 +120,7 @@
     font-size: clamp(12px, 1vw, 16px); font-weight: 600; color: #1D2129;
   }
   .chip svg { width: 16px; height: 16px; }
+  .ico { width: 20px; height: 20px; stroke: currentColor; fill: none; }  /* shared icon sizing (see references/architecture, §7) */
   .chip.blue svg { color: var(--brand); } .chip.teal svg { color: var(--accent-teal); }
   .chip.orange svg { color: var(--accent-orange); } .chip.green svg { color: var(--accent-green); }
   .chip.rose svg { color: var(--accent-rose); }
@@ -207,24 +209,40 @@
     background: transparent; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700; transition: all .2s; }
   .aspect-btn.active { background: linear-gradient(135deg, var(--brand), var(--accent-teal)); color: #fff; border-color: transparent; }
 
-  /* ===================== STACKED MODE (9:16 / 1:1) ===================== */
-  #stage[data-stack-mode="1"] .layout {
-    grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center;
-    gap: var(--col-gap); padding: 120px var(--pad-x) 90px;
+  /* ===================== STACKED MODE (9:16 / 1:1) =====================
+     Keyed off data-aspect. --stack-mode is a CSS custom property, not an
+     attribute, so a selector like [data-stack-mode="1"] matches nothing.     */
+  #stage[data-aspect="9:16"] .layout,
+  #stage[data-aspect="1:1"] .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;  /* never auto 1fr: it splits copy from graphic */
+    align-content: center;
+    justify-items: stretch;         /* never center: width:100% graphics collapse */
+    gap: var(--col-gap); padding: 96px var(--pad-x) 84px;
   }
-  /* 9:16 scoped tuning (placed after shared rule to win cascade) */
-  #stage[data-aspect="9:16"] .layout { grid-template-rows: auto auto; align-content: center;
-    justify-items: stretch; gap: 40px; padding: 96px var(--pad-x) 84px; }
-  #stage[data-aspect="9:16"] .left-copy { align-items: center; text-align: center; max-width: 100%; }
+  #stage[data-aspect="9:16"] .left-copy,
+  #stage[data-aspect="1:1"] .left-copy { align-items: center; text-align: center; max-width: 100%; }
   #stage[data-aspect="9:16"] .left-copy .scene-title,
-  #stage[data-aspect="9:16"] .left-copy .scene-sub { width: 100%; }
-  #stage[data-aspect="9:16"] .chip-row { justify-content: center; }
+  #stage[data-aspect="9:16"] .left-copy .scene-sub,
+  #stage[data-aspect="1:1"] .left-copy .scene-title,
+  #stage[data-aspect="1:1"] .left-copy .scene-sub { width: 100%; }
+  #stage[data-aspect="9:16"] .chip-row,
+  #stage[data-aspect="1:1"] .chip-row { justify-content: center; }
+
+  /* 9:16 scoped tuning (vertical space is generous) */
+  #stage[data-aspect="9:16"] .layout { gap: 40px; }
   #stage[data-aspect="9:16"] #s1 .brand-name { font-size: 76px; }
   #stage[data-aspect="9:16"] #s1 .brand-sub { font-size: 26px; letter-spacing: 2px; }
   #stage[data-aspect="9:16"] #s1 .logo-img { width: 170px; height: 170px; }
   #stage[data-aspect="9:16"] #s8 .end-logo { width: 150px; height: 150px; }
   #stage[data-aspect="9:16"] #s8 .end-brand { font-size: 60px; }
+
+  /* 1:1 scoped tuning (tightest ratio: shrink spacing and type, or it overflows) */
+  #stage[data-aspect="1:1"] .layout { gap: 28px; padding: 72px var(--pad-x) 64px; }
   #stage[data-aspect="1:1"] #s1 .brand-name { font-size: 70px; }
+  #stage[data-aspect="1:1"] #s1 .logo-img { width: 150px; height: 150px; }
+  #stage[data-aspect="1:1"] #s8 .end-logo { width: 140px; height: 140px; }
+  #stage[data-aspect="1:1"] #s8 .end-brand { font-size: 58px; }
   #stage[data-aspect="4:3"] #s1 .brand-name { font-size: 88px; }
 </style>
 </head>
@@ -265,9 +283,9 @@
       <div class="brand-name">{{PRODUCT}}</div>
       <div class="brand-sub">{{TAGLINE}}</div>
       <div class="brand-tags">
-        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
-        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
-        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
+        <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg class="ico"><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg class="ico"><use href="#ic-users"/></svg>{{CAP3}}</div>
       </div>
     </div>
     <!-- data particles: set data-tx/data-ty to converge offsets -->
@@ -286,9 +304,9 @@
         <div class="scene-title" style="margin-top:16px;">{{S2_TITLE_L1}}<br/>{{S2_TITLE_L2}}</div>
         <div class="scene-sub">{{S2_SUB}}</div>
         <div class="chip-row">
-          <div class="chip blue"><svg><use href="#ic-table"/></svg>{{S2_CHIP1}}</div>
-          <div class="chip teal"><svg><use href="#ic-layers"/></svg>{{S2_CHIP2}}</div>
-          <div class="chip orange"><svg><use href="#ic-ai"/></svg>{{S2_CHIP3}}</div>
+          <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{S2_CHIP1}}</div>
+          <div class="chip teal"><svg class="ico"><use href="#ic-layers"/></svg>{{S2_CHIP2}}</div>
+          <div class="chip orange"><svg class="ico"><use href="#ic-ai"/></svg>{{S2_CHIP3}}</div>
         </div>
       </div>
       <div class="table-card">
@@ -322,13 +340,13 @@
       <div class="end-brand">{{PRODUCT}}</div>
       <div class="end-slogan"><span class="hl">{{SLOGAN_HL}}</span> · {{SLOGAN_REST}}</div>
       <div class="end-chips">
-        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
-        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
-        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
-        <div class="chip green"><svg><use href="#ic-shield"/></svg>{{CAP4}}</div>
+        <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg class="ico"><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg class="ico"><use href="#ic-users"/></svg>{{CAP3}}</div>
+        <div class="chip green"><svg class="ico"><use href="#ic-shield"/></svg>{{CAP4}}</div>
       </div>
-      <div class="end-cta">{{CTA_TEXT}}<svg><use href="#ic-arrow-right"/></svg></div>
-      <div class="end-url"><svg><use href="#ic-globe"/></svg>{{OFFICIAL_DOMAIN}}</div>
+      <div class="end-cta">{{CTA_TEXT}}<svg class="ico"><use href="#ic-arrow-right"/></svg></div>
+      <div class="end-url"><svg class="ico"><use href="#ic-globe"/></svg>{{OFFICIAL_DOMAIN}}</div>
     </div>
   </div>
 
@@ -341,7 +359,7 @@
     <svg id="icon-play"><use href="#ic-play"/></svg>
     <svg id="icon-pause" style="display:none"><use href="#ic-pause"/></svg>
   </button>
-  <button class="ctrl-btn" id="btn-replay" title="重播 (R)"><svg><use href="#ic-replay"/></svg></button>
+  <button class="ctrl-btn" id="btn-replay" title="重播 (R)"><svg class="ico"><use href="#ic-replay"/></svg></button>
   <div id="progress-wrap"><div id="progress-bar"></div></div>
   <div id="time-label">00.0 / 26.2s</div>
   <div id="scene-label">{{S1_LABEL}}</div>

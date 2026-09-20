@@ -4,6 +4,9 @@
 
 The complete technical specification of the single-file promo animation embodied by `assets/skeleton.html`. Consult section by section as you build.
 
+> **`assets/skeleton.html` is the source of truth** for variable names, class names
+> and values. If a snippet here ever disagrees with the skeleton, follow the skeleton.
+
 ## Contents
 
 1. [File topology](#1-file-topology)
@@ -92,7 +95,7 @@ html, body {
 #stage {
   position: absolute; left: 50%; top: 50%;
   width: 1920px; height: 1080px;              /* 16:9 default */
-  background: var(--bg); overflow: hidden;
+  background: #fff; overflow: hidden;   /* the stage surface is light; #viewport behind it is dark */
   transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
 }
@@ -102,20 +105,21 @@ Aspect ratios write all layout variables onto `#stage`, so every scene reflows a
 
 ```css
 :root {
-  --bg: #070b18;
-  --brand: #165DFF;        /* harvested from the official site */
-  --brand-light: #4080FF;
-  --accent: #00C4B4;       /* teal */
-  --accent-warm: #FF7D00;  /* warm orange */
-  --text: #ffffff;
-  --text-muted: #8b96b0;
+  --brand: #165DFF;          /* harvested from the official site */
+  --brand-2: #4080FF;        /* gradient end / lighter variant */
+  --accent-teal: #00C4B4;
+  --accent-orange: #FF7D00;
+  --ink: #151515;            /* primary text on the light scene surface */
+  --ink-2: #6C6F7D;          /* secondary text */
+  --line: #E8ECFF;           /* hairline borders */
 }
 
 /* 16:9 (default) — two columns: copy | graphic */
 #stage {
   --sw: 1920px; --sh: 1080px;
   --pad-x: 110px; --col-left: 700px; --col-gap: 80px;
-  --title-size: 76px; --stack-mode: 0;
+  --title-size: 76px; --stack-mode: 0;   /* informational: a custom property
+                                            cannot be used in a selector */
 }
 /* 4:3 */
 #stage[data-aspect="4:3"] {
@@ -156,7 +160,7 @@ Aspect ratios write all layout variables onto `#stage`, so every scene reflows a
   <div class="layout">
     <!-- child 1: copy (badge → title → sub → chips) -->
     <div class="left-copy">
-      <div class="scene-badge"><svg class="ico"><use href="#ic-..."/></svg> Badge text</div>
+      <div class="badge"><svg class="ico"><use href="#ic-..."/></svg> Badge text</div>
       <h2 class="scene-title">Main title</h2>
       <p class="scene-sub">One descriptive subtitle sentence.</p>
       <div class="chip-row">
@@ -174,8 +178,12 @@ Aspect ratios write all layout variables onto `#stage`, so every scene reflows a
 Layout CSS:
 
 ```css
-.scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; }
-.scene.active { opacity: 1; visibility: visible; }
+.scene {
+  position: absolute; inset: 0; opacity: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #F8FAFF 0%, #EEF3FF 55%, #F0F5FF 100%);
+  overflow: hidden;
+}
 
 .layout {
   position: absolute; inset: 0;
@@ -188,7 +196,7 @@ Layout CSS:
 
 .left-copy { display: flex; flex-direction: column; gap: 24px; max-width: var(--col-left); }
 .scene-title { font-size: var(--title-size); font-weight: 800; line-height: 1.1; }
-.scene-sub { font-size: 26px; color: var(--text-muted); line-height: 1.6; }
+.scene-sub { font-size: 26px; color: var(--ink-2); line-height: 1.6; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 14px; }
 ```
 
@@ -200,17 +208,17 @@ Layout CSS:
 Scene badge / title / sub / chips:
 
 ```css
-.scene-badge {
+.badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 16px; border-radius: 999px;
   background: rgba(22,93,255,.12); border: 1px solid rgba(22,93,255,.3);
-  color: var(--brand-light); font-size: 16px; font-weight: 600;
+  color: var(--brand-2); font-size: 16px; font-weight: 600;
 }
 .chip {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 18px; border-radius: 999px;
   background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-  font-size: 17px; color: var(--text-muted);
+  font-size: 17px; color: var(--ink-2);
 }
 ```
 
@@ -218,7 +226,9 @@ Scene badge / title / sub / chips:
 
 ## 5. Stacked-mode responsive rules
 
-When `--stack-mode: 1` (1:1 and 9:16), the layout flips from two columns to a centered stacked column. **This is the most bug-prone part across ratios.**
+For the stacked ratios (1:1 and 9:16), the layout flips from two columns to a centered
+stacked column. The rules key off `data-aspect`; `--stack-mode` is a CSS custom property
+and **cannot** be used in a selector. **This is the most bug-prone part across ratios.**
 
 ```css
 #stage[data-aspect="1:1"] .layout,
@@ -278,18 +288,16 @@ Define brand colors as tokens on `:root` and reuse them everywhere. Never hardco
 
 ```css
 :root {
-  --brand: #165DFF;         /* primary — harvested from the official site */
-  --brand-light: #4080FF;   /* lighter variant */
-  --accent: #00C4B4;        /* teal accent */
-  --accent-warm: #FF7D00;   /* warm orange (alerts/CTA) */
-  --success: #00B42A;       /* green done-state */
-  --gold: #FFB800;          /* gold highlight */
-  --rose: #F53F3F;          /* rose emphasis */
-  --bg: #070b18;            /* dark stage background */
-  --surface: rgba(255,255,255,.04);
-  --border: rgba(255,255,255,.09);
-  --text: #ffffff;
-  --text-muted: #8b96b0;
+  --brand: #165DFF;          /* primary — harvested from the official site */
+  --brand-2: #4080FF;        /* gradient end / lighter variant */
+  --accent-teal: #00C4B4;    /* teal accent */
+  --accent-orange: #FF7D00;  /* warm orange (alerts/CTA) */
+  --accent-green: #00B42A;   /* green done-state */
+  --accent-gold: #FFB800;    /* gold highlight */
+  --accent-rose: #F53F3F;    /* rose emphasis */
+  --ink: #151515;            /* primary text */
+  --ink-2: #6C6F7D;          /* secondary text */
+  --line: #E8ECFF;           /* hairline borders */
 }
 ```
 
@@ -297,7 +305,7 @@ Define brand colors as tokens on `:root` and reuse them everywhere. Never hardco
 
 Gradients should mix the brand color with a harmonious accent:
 ```css
-background: linear-gradient(135deg, var(--brand), var(--accent));
+background: linear-gradient(135deg, var(--brand), var(--accent-teal));
 ```
 
 ---
@@ -391,16 +399,13 @@ function setAspect(ratio) {
   fitStage();
 }
 
-// Scene visibility (used by timeline callbacks)
-function showScene(id, t) {
-  window.__tl.call(() => {
-    scenes.forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    syncDots(id);
-  }, null, t);
+// Scene visibility: driven by the timeline itself, no .active class
+function showScene(id, at) {
+  tl.set('#' + id, { opacity: 1, zIndex: 5 }, at);
+  tl.set('#' + id, { zIndex: 4 }, at + 0.01);
 }
-function hideScene(id, t) {
-  window.__tl.call(() => document.getElementById(id).classList.remove('active'), null, t);
+function hideScene(id, at) {
+  tl.to('#' + id, { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, at);
 }
 
 // Progress bar + time label

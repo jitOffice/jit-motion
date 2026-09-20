@@ -19,7 +19,7 @@ Checks (errors fail the build, warnings need review) / 检查项（错误=失败
   - No forbidden purple/magenta colors / 禁用紫洋红色
   - No dead CSS selectors (a .class in <style> absent from HTML and JS) / 死 CSS 选择器
   - Timing consistency: DURATION vs #time-label vs JSON-LD duration / 时长一致
-  - GSAP library referenced / 已引用 GSAP
+  - GSAP library referenced, and a local copy exists on disk / 已引用 GSAP,本地副本存在
   - JSON-LD VideoObject present / 存在 JSON-LD VideoObject
   - Logo <img> referenced and the file exists on disk / logo 已引用且存在
   - Scene registry count vs MARKS count / 场景数 vs MARKS 数
@@ -45,6 +45,7 @@ MESSAGES = {
         "jsonld_duration": "JSON-LD duration PT{ld}S vs DURATION {dur}s (should round to match)",
         "no_duration": "No `const DURATION = <number>` found",
         "no_gsap": "GSAP library not referenced",
+        "gsap_missing": "GSAP file missing on disk: {lib}",
         "no_jsonld": "Missing JSON-LD VideoObject block",
         "no_logo": "No logo <img> found",
         "logo_missing": "Logo file missing on disk: {lg}",
@@ -70,6 +71,7 @@ MESSAGES = {
         "jsonld_duration": "JSON-LD 时长 PT{ld}S 与 DURATION {dur}s 不符（四舍五入后应一致）",
         "no_duration": "未找到 `const DURATION = <number>`",
         "no_gsap": "未引用 GSAP 库",
+        "gsap_missing": "GSAP 库文件在磁盘上不存在：{lib}",
         "no_jsonld": "缺少 JSON-LD VideoObject 块",
         "no_logo": "未找到 logo <img>",
         "logo_missing": "logo 文件在磁盘上不存在：{lg}",
@@ -229,9 +231,15 @@ def main():
     else:
         warnings.append(t("no_duration"))
 
-    # 7. GSAP present
+    # 7. GSAP present, and any local copy actually exists (mirrors the logo check)
     if not re.search(r"<script[^>]*src=[^>]*gsap", src) and "gsap.timeline" not in js:
         errors.append(t("no_gsap"))
+    for lib in set(re.findall(r'<script[^>]*src="([^"]*gsap[^"]*)"', src, re.I)):
+        if lib.startswith(("http://", "https://", "//")):
+            continue
+        lp = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(path)), lib))
+        if not os.path.isfile(lp):
+            errors.append(t("gsap_missing", lib=lib))
 
     # 8. JSON-LD VideoObject
     if '"@type": "VideoObject"' not in src and '"@type":"VideoObject"' not in src:
