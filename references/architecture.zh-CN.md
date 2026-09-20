@@ -4,6 +4,9 @@
 
 本文件是 `assets/skeleton.html` 所体现的单文件宣传动画的完整技术规格。构建时逐节对照。
 
+> **以 `assets/skeleton.html` 为准**：变量名、类名与取值一律以骨架为准。
+> 本文片段若与骨架不一致，请以骨架为准。
+
 ## 目录
 
 1. [文件拓扑](#1-文件拓扑)
@@ -92,7 +95,7 @@ html, body {
 #stage {
   position: absolute; left: 50%; top: 50%;
   width: 1920px; height: 1080px;              /* 16:9 默认 */
-  background: var(--bg); overflow: hidden;
+  background: #fff; overflow: hidden;   /* 舞台表面是浅色；其后的 #viewport 是深色 */
   transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
 }
@@ -102,20 +105,21 @@ html, body {
 
 ```css
 :root {
-  --bg: #070b18;
-  --brand: #165DFF;        /* 抓取自官网 */
-  --brand-light: #4080FF;
-  --accent: #00C4B4;       /* 青绿 */
-  --accent-warm: #FF7D00;  /* 暖橙 */
-  --text: #ffffff;
-  --text-muted: #8b96b0;
+  --brand: #165DFF;          /* 抓取自官网 */
+  --brand-2: #4080FF;        /* 渐变终点 / 亮色变体 */
+  --accent-teal: #00C4B4;
+  --accent-orange: #FF7D00;
+  --ink: #151515;            /* 浅色场景上的主文字 */
+  --ink-2: #6C6F7D;          /* 次要文字 */
+  --line: #E8ECFF;           /* 细线边框 */
 }
 
 /* 16:9（默认）— 双栏：文案 | 图形 */
 #stage {
   --sw: 1920px; --sh: 1080px;
   --pad-x: 110px; --col-left: 700px; --col-gap: 80px;
-  --title-size: 76px; --stack-mode: 0;
+  --title-size: 76px; --stack-mode: 0;   /* 仅作标记：自定义属性
+                                            不能用在选择器里 */
 }
 /* 4:3 */
 #stage[data-aspect="4:3"] {
@@ -156,7 +160,7 @@ html, body {
   <div class="layout">
     <!-- 子元素 1：文案（badge → 标题 → 副标题 → chips）-->
     <div class="left-copy">
-      <div class="scene-badge"><svg class="ico"><use href="#ic-..."/></svg> Badge 文本</div>
+      <div class="badge"><svg class="ico"><use href="#ic-..."/></svg> Badge 文本</div>
       <h2 class="scene-title">主标题</h2>
       <p class="scene-sub">一句描述性副标题。</p>
       <div class="chip-row">
@@ -174,8 +178,12 @@ html, body {
 布局 CSS：
 
 ```css
-.scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; }
-.scene.active { opacity: 1; visibility: visible; }
+.scene {
+  position: absolute; inset: 0; opacity: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #F8FAFF 0%, #EEF3FF 55%, #F0F5FF 100%);
+  overflow: hidden;
+}
 
 .layout {
   position: absolute; inset: 0;
@@ -188,7 +196,7 @@ html, body {
 
 .left-copy { display: flex; flex-direction: column; gap: 24px; max-width: var(--col-left); }
 .scene-title { font-size: var(--title-size); font-weight: 800; line-height: 1.1; }
-.scene-sub { font-size: 26px; color: var(--text-muted); line-height: 1.6; }
+.scene-sub { font-size: 26px; color: var(--ink-2); line-height: 1.6; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 14px; }
 ```
 
@@ -200,17 +208,17 @@ html, body {
 场景 badge / 标题 / 副标题 / chips：
 
 ```css
-.scene-badge {
+.badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 16px; border-radius: 999px;
   background: rgba(22,93,255,.12); border: 1px solid rgba(22,93,255,.3);
-  color: var(--brand-light); font-size: 16px; font-weight: 600;
+  color: var(--brand-2); font-size: 16px; font-weight: 600;
 }
 .chip {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 18px; border-radius: 999px;
   background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-  font-size: 17px; color: var(--text-muted);
+  font-size: 17px; color: var(--ink-2);
 }
 ```
 
@@ -218,7 +226,8 @@ html, body {
 
 ## 5. stacked 模式响应式规则
 
-当 `--stack-mode: 1`（1:1 与 9:16）时，布局从双栏翻转为居中堆叠列。**这是各比例间最易出问题的部分。**
+对于堆叠比例（1:1 与 9:16），布局从双栏翻转为居中堆叠列。相关规则挂在 `data-aspect` 上；
+`--stack-mode` 是 CSS 自定义属性，**不能**用在选择器里。**这是各比例间最易出问题的部分。**
 
 ```css
 #stage[data-aspect="1:1"] .layout,
@@ -278,18 +287,16 @@ html, body {
 
 ```css
 :root {
-  --brand: #165DFF;         /* 主色 — 抓取自官网 */
-  --brand-light: #4080FF;   /* 亮色变体 */
-  --accent: #00C4B4;        /* 青绿辅助 */
-  --accent-warm: #FF7D00;   /* 暖橙（告警/CTA）*/
-  --success: #00B42A;       /* 绿色完成态 */
-  --gold: #FFB800;          /* 金黄高亮 */
-  --rose: #F53F3F;          /* 玫红强调 */
-  --bg: #070b18;            /* 深色舞台背景 */
-  --surface: rgba(255,255,255,.04);
-  --border: rgba(255,255,255,.09);
-  --text: #ffffff;
-  --text-muted: #8b96b0;
+  --brand: #165DFF;          /* 主色 — 抓取自官网 */
+  --brand-2: #4080FF;        /* 渐变终点 / 亮色变体 */
+  --accent-teal: #00C4B4;    /* 青绿辅助 */
+  --accent-orange: #FF7D00;  /* 暖橙（告警/CTA）*/
+  --accent-green: #00B42A;   /* 绿色完成态 */
+  --accent-gold: #FFB800;    /* 金黄高亮 */
+  --accent-rose: #F53F3F;    /* 玫红强调 */
+  --ink: #151515;            /* 主文字 */
+  --ink-2: #6C6F7D;          /* 次要文字 */
+  --line: #E8ECFF;           /* 细线边框 */
 }
 ```
 
@@ -297,7 +304,7 @@ html, body {
 
 渐变应混合品牌色与协调的辅助色：
 ```css
-background: linear-gradient(135deg, var(--brand), var(--accent));
+background: linear-gradient(135deg, var(--brand), var(--accent-teal));
 ```
 
 ---
@@ -391,16 +398,13 @@ function setAspect(ratio) {
   fitStage();
 }
 
-// 场景可见性（供时间轴回调使用）
-function showScene(id, t) {
-  window.__tl.call(() => {
-    scenes.forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    syncDots(id);
-  }, null, t);
+// 场景显隐：由时间线本身驱动，没有 .active 类
+function showScene(id, at) {
+  tl.set('#' + id, { opacity: 1, zIndex: 5 }, at);
+  tl.set('#' + id, { zIndex: 4 }, at + 0.01);
 }
-function hideScene(id, t) {
-  window.__tl.call(() => document.getElementById(id).classList.remove('active'), null, t);
+function hideScene(id, at) {
+  tl.to('#' + id, { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, at);
 }
 
 // 进度条 + 时间标签

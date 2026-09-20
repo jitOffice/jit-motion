@@ -120,6 +120,7 @@
     font-size: clamp(12px, 1vw, 16px); font-weight: 600; color: #1D2129;
   }
   .chip svg { width: 16px; height: 16px; }
+  .ico { width: 20px; height: 20px; stroke: currentColor; fill: none; }  /* shared icon sizing (see references/architecture, §7) */
   .chip.blue svg { color: var(--brand); } .chip.teal svg { color: var(--accent-teal); }
   .chip.orange svg { color: var(--accent-orange); } .chip.green svg { color: var(--accent-green); }
   .chip.rose svg { color: var(--accent-rose); }
@@ -282,9 +283,9 @@
       <div class="brand-name">{{PRODUCT}}</div>
       <div class="brand-sub">{{TAGLINE}}</div>
       <div class="brand-tags">
-        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
-        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
-        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
+        <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg class="ico"><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg class="ico"><use href="#ic-users"/></svg>{{CAP3}}</div>
       </div>
     </div>
     <!-- data particles: set data-tx/data-ty to converge offsets -->
@@ -303,9 +304,9 @@
         <div class="scene-title" style="margin-top:16px;">{{S2_TITLE_L1}}<br/>{{S2_TITLE_L2}}</div>
         <div class="scene-sub">{{S2_SUB}}</div>
         <div class="chip-row">
-          <div class="chip blue"><svg><use href="#ic-table"/></svg>{{S2_CHIP1}}</div>
-          <div class="chip teal"><svg><use href="#ic-layers"/></svg>{{S2_CHIP2}}</div>
-          <div class="chip orange"><svg><use href="#ic-ai"/></svg>{{S2_CHIP3}}</div>
+          <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{S2_CHIP1}}</div>
+          <div class="chip teal"><svg class="ico"><use href="#ic-layers"/></svg>{{S2_CHIP2}}</div>
+          <div class="chip orange"><svg class="ico"><use href="#ic-ai"/></svg>{{S2_CHIP3}}</div>
         </div>
       </div>
       <div class="table-card">
@@ -339,13 +340,13 @@
       <div class="end-brand">{{PRODUCT}}</div>
       <div class="end-slogan"><span class="hl">{{SLOGAN_HL}}</span> · {{SLOGAN_REST}}</div>
       <div class="end-chips">
-        <div class="chip blue"><svg><use href="#ic-table"/></svg>{{CAP1}}</div>
-        <div class="chip teal"><svg><use href="#ic-ai"/></svg>{{CAP2}}</div>
-        <div class="chip orange"><svg><use href="#ic-users"/></svg>{{CAP3}}</div>
-        <div class="chip green"><svg><use href="#ic-shield"/></svg>{{CAP4}}</div>
+        <div class="chip blue"><svg class="ico"><use href="#ic-table"/></svg>{{CAP1}}</div>
+        <div class="chip teal"><svg class="ico"><use href="#ic-ai"/></svg>{{CAP2}}</div>
+        <div class="chip orange"><svg class="ico"><use href="#ic-users"/></svg>{{CAP3}}</div>
+        <div class="chip green"><svg class="ico"><use href="#ic-shield"/></svg>{{CAP4}}</div>
       </div>
-      <div class="end-cta">{{CTA_TEXT}}<svg><use href="#ic-arrow-right"/></svg></div>
-      <div class="end-url"><svg><use href="#ic-globe"/></svg>{{OFFICIAL_DOMAIN}}</div>
+      <div class="end-cta">{{CTA_TEXT}}<svg class="ico"><use href="#ic-arrow-right"/></svg></div>
+      <div class="end-url"><svg class="ico"><use href="#ic-globe"/></svg>{{OFFICIAL_DOMAIN}}</div>
     </div>
   </div>
 
@@ -358,7 +359,7 @@
     <svg id="icon-play"><use href="#ic-play"/></svg>
     <svg id="icon-pause" style="display:none"><use href="#ic-pause"/></svg>
   </button>
-  <button class="ctrl-btn" id="btn-replay" title="重播 (R)"><svg><use href="#ic-replay"/></svg></button>
+  <button class="ctrl-btn" id="btn-replay" title="重播 (R)"><svg class="ico"><use href="#ic-replay"/></svg></button>
   <div id="progress-wrap"><div id="progress-bar"></div></div>
   <div id="time-label">00.0 / 26.2s</div>
   <div id="scene-label">{{S1_LABEL}}</div>
