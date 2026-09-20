@@ -64,7 +64,7 @@
   #stage {
     position: relative; flex-shrink: 0;
     --sw: 1920px; --sh: 1080px; --pad-x: 120px; --col-left: 620px; --col-gap: 80px;
-    --title-size: 78px; --stack-mode: 0;
+    --title-size: 78px; --stack-mode: 0;  /* informational only - cannot be used in a selector */
     width: var(--sw); height: var(--sh); transform-origin: center center;
     background: #fff; border-radius: 24px; overflow: hidden;
     box-shadow: 0 40px 120px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06), 0 0 200px rgba(22,93,255,0.20);
@@ -208,24 +208,40 @@
     background: transparent; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700; transition: all .2s; }
   .aspect-btn.active { background: linear-gradient(135deg, var(--brand), var(--accent-teal)); color: #fff; border-color: transparent; }
 
-  /* ===================== STACKED MODE (9:16 / 1:1) ===================== */
-  #stage[data-stack-mode="1"] .layout {
-    grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center;
-    gap: var(--col-gap); padding: 120px var(--pad-x) 90px;
+  /* ===================== STACKED MODE (9:16 / 1:1) =====================
+     Keyed off data-aspect. --stack-mode is a CSS custom property, not an
+     attribute, so a selector like [data-stack-mode="1"] matches nothing.     */
+  #stage[data-aspect="9:16"] .layout,
+  #stage[data-aspect="1:1"] .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;  /* never auto 1fr: it splits copy from graphic */
+    align-content: center;
+    justify-items: stretch;         /* never center: width:100% graphics collapse */
+    gap: var(--col-gap); padding: 96px var(--pad-x) 84px;
   }
-  /* 9:16 scoped tuning (placed after shared rule to win cascade) */
-  #stage[data-aspect="9:16"] .layout { grid-template-rows: auto auto; align-content: center;
-    justify-items: stretch; gap: 40px; padding: 96px var(--pad-x) 84px; }
-  #stage[data-aspect="9:16"] .left-copy { align-items: center; text-align: center; max-width: 100%; }
+  #stage[data-aspect="9:16"] .left-copy,
+  #stage[data-aspect="1:1"] .left-copy { align-items: center; text-align: center; max-width: 100%; }
   #stage[data-aspect="9:16"] .left-copy .scene-title,
-  #stage[data-aspect="9:16"] .left-copy .scene-sub { width: 100%; }
-  #stage[data-aspect="9:16"] .chip-row { justify-content: center; }
+  #stage[data-aspect="9:16"] .left-copy .scene-sub,
+  #stage[data-aspect="1:1"] .left-copy .scene-title,
+  #stage[data-aspect="1:1"] .left-copy .scene-sub { width: 100%; }
+  #stage[data-aspect="9:16"] .chip-row,
+  #stage[data-aspect="1:1"] .chip-row { justify-content: center; }
+
+  /* 9:16 scoped tuning (vertical space is generous) */
+  #stage[data-aspect="9:16"] .layout { gap: 40px; }
   #stage[data-aspect="9:16"] #s1 .brand-name { font-size: 76px; }
   #stage[data-aspect="9:16"] #s1 .brand-sub { font-size: 26px; letter-spacing: 2px; }
   #stage[data-aspect="9:16"] #s1 .logo-img { width: 170px; height: 170px; }
   #stage[data-aspect="9:16"] #s8 .end-logo { width: 150px; height: 150px; }
   #stage[data-aspect="9:16"] #s8 .end-brand { font-size: 60px; }
+
+  /* 1:1 scoped tuning (tightest ratio: shrink spacing and type, or it overflows) */
+  #stage[data-aspect="1:1"] .layout { gap: 28px; padding: 72px var(--pad-x) 64px; }
   #stage[data-aspect="1:1"] #s1 .brand-name { font-size: 70px; }
+  #stage[data-aspect="1:1"] #s1 .logo-img { width: 150px; height: 150px; }
+  #stage[data-aspect="1:1"] #s8 .end-logo { width: 140px; height: 140px; }
+  #stage[data-aspect="1:1"] #s8 .end-brand { font-size: 58px; }
   #stage[data-aspect="4:3"] #s1 .brand-name { font-size: 88px; }
 </style>
 </head>
