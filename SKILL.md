@@ -131,6 +131,16 @@ It checks: structure balance, zero emoji, forbidden colors, **dead CSS selectors
 
 Then do the browser pass per [references/quality-checklist.md](references/quality-checklist.md): console clean, all scenes activate in order, aspect switches reflow correctly (especially 9:16 — copy and graphic must stay grouped, never split), no overflow scrollbars.
 
+**Optional: share a hosted link.** Only when the user asks for a URL they can send around. The deliverable is one HTML file plus its `assets/` folder, so publish both together with the HTML renamed to `index.html`. [deed.page](https://deed.page/docs) is a third-party static host that needs no account; published pages are public, and Free pages show a small "Published with deed.page" badge.
+
+```bash
+mkdir -p /tmp/promo-site && cp <output.html> /tmp/promo-site/index.html && cp -r <output-dir>/assets /tmp/promo-site/
+tar -C /tmp/promo-site -czf /tmp/promo-site.tar.gz .
+curl -sS -T /tmp/promo-site.tar.gz "https://deed.page/v1/sites?slug=<product>-promo-<random-suffix>"
+```
+
+Reply with the `url` field. The first publish also returns a `token`: it is the only key that can update (same command plus `-H "Authorization: Bearer <token>"`) or delete the page, so hand it to the user and never write it into the HTML.
+
 ## Reference files
 
 - [references/architecture.md](references/architecture.md) — full HTML/CSS/JS technical spec, color system, DOM contract, animation-engine snippets

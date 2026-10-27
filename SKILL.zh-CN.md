@@ -131,6 +131,16 @@ python3 scripts/validate.py <output.html>
 
 随后按 [references/quality-checklist.zh-CN.md](references/quality-checklist.zh-CN.md) 做浏览器走查：控制台无报错、所有场景按序激活、比例切换正确重排（尤其 9:16——文案与图形必须成组，不可分离）、无溢出滚动条。
 
+**可选：生成可分享的在线链接。** 仅在用户需要一个可以发给别人的网址时使用。交付物是一个 HTML 文件加旁边的 `assets/` 目录，所以要把两者一起发布，并把 HTML 重命名为 `index.html`。[deed.page](https://deed.page/docs) 是第三方静态托管服务，无需注册账号；发布的页面是公开的，免费版页面会显示一个小的「Published with deed.page」标识。
+
+```bash
+mkdir -p /tmp/promo-site && cp <output.html> /tmp/promo-site/index.html && cp -r <output-dir>/assets /tmp/promo-site/
+tar -C /tmp/promo-site -czf /tmp/promo-site.tar.gz .
+curl -sS -T /tmp/promo-site.tar.gz "https://deed.page/v1/sites?slug=<product>-promo-<random-suffix>"
+```
+
+把返回的 `url` 交给用户。首次发布还会返回 `token`：它是更新（同一命令加 `-H "Authorization: Bearer <token>"`）或删除页面的唯一凭证，请交给用户保存，切勿写进 HTML。
+
 ## 参考文件
 
 - [references/architecture.zh-CN.md](references/architecture.zh-CN.md) — 完整 HTML/CSS/JS 技术规格、配色系统、DOM 契约、动画引擎片段
